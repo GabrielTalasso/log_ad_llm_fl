@@ -9,7 +9,7 @@ import json
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 #load nrows
-nrows = 1000
+nrows = None
 tokenized_datasets = DatasetDict.load_from_disk('../.dataset/hdfs/tokenized', keep_in_memory=True)
 
 if nrows:
@@ -105,6 +105,8 @@ def evaluate_model(model, test_dataset, tokenizer):
 
 # Evaluate both pre-trained and fine-tuned models
 test_data = tokenized_datasets["test"]
+print('Evaluating - Test Data Length:', len(test_data))
+
 pretrained_loss = evaluate_model(AutoModelForMaskedLM.from_pretrained("bert-base-uncased").to(device), test_data, tokenizer)
 finetuned_loss = evaluate_model(model, test_data, tokenizer)
 
