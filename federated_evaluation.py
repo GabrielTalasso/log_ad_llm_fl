@@ -20,7 +20,7 @@ def tokenize_function(examples):
     tokenizer.pad_token = tokenizer.eos_token
     return tokenizer(examples["text"], padding="max_length", truncation=True, max_length=512)
 
-def load_global_testset(nrows = 10):
+def load_global_testset(nrows = 1000):
 
     dataset_path = '../.dataset/hdfs/test.csv'
     data = pd.read_csv(dataset_path, nrows=nrows)
@@ -31,7 +31,7 @@ def load_global_testset(nrows = 10):
 
     return Dataset.from_dict(dataset_dic), labels
 
-def eval_global(calcule_topk = False, k = 5):
+def eval_global(calcule_topk = False, k = 5, nrows = 1000):
     results = []
     detection_results = []
     for round in range(1, len(os.listdir(experiment_path))):
@@ -44,7 +44,7 @@ def eval_global(calcule_topk = False, k = 5):
 
         tokenizer = AutoTokenizer.from_pretrained("HuggingFaceTB/SmolLM-360M")
         tokenizer.pad_token = tokenizer.eos_token
-        test_dataset, labels_anom = load_global_testset()
+        test_dataset, labels_anom = load_global_testset(nrows = nrows)
         if calcule_topk and round == 1:
             print('Calculating topk')
             # count number of ones
@@ -115,14 +115,14 @@ def aggregate_client_train_losses():
     return results
 
 if __name__ == '__main__':
-    experiment_path = 'fl-results/testing'
+    experiment_path = 'fl-results/returning_model_loading'
     results_global, detect = eval_global(calcule_topk = True)
-    results_local = aggregate_client_train_losses()
+    #Sresults_local = aggregate_client_train_losses()
 
-    df_local = pd.DataFrame(results_local)
+    #df_local = pd.DataFrame(results_local)
     df_results = pd.DataFrame(results_global)
 
-    df_results['client_losses_train'] = df_local['client_losses_train']
+    #df_results['client_losses_train'] = df_local['client_losses_train']
     
     sim_name = experiment_path.split('/')[-1]
     df_results.to_csv(f'results_{sim_name}.csv', index=False)

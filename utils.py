@@ -8,8 +8,9 @@ import json
 import random
 from typing import List, Tuple
 from datasets import Dataset
+import copy
 
-def initialize_model(model_name, lora_rank = 8, lora = True):
+def initialize_model(model_name, lora_rank = 8, lora = True, sim_name = 'sim_name', round = 1):
 
     """
     Initialize model and tokenizer from Hugging Face model name
@@ -23,12 +24,15 @@ def initialize_model(model_name, lora_rank = 8, lora = True):
 
     if lora:
         lora_config = LoraConfig(
-                    r= lora_rank,
+                    r = lora_rank,
                     lora_alpha= lora_rank*2,
                     lora_dropout=0.1
                 )
         
         model = get_peft_model(model, lora_config)
+
+        #save model
+        model.save_pretrained(f"./fl-results/{sim_name}/round_0/global_model")
 
     return model, tokenizer
 
@@ -78,19 +82,21 @@ def split_data(dataset, num_clients, eval_split = 0.1):
     return clients_datasets_train, clients_datasets_eval
 
 
-def train_client(client, client_dataset, model, round, sim_name, tokenizer, 
+def train_client(client, client_dataset, global_model, round, sim_name, tokenizer, 
                  epochs=1, batch_size=32, max_steps=100):
 
     """
     Train model on client dataset
     """
+    model = AutoModelForCausalLM.from_pretrained('HuggingFaceTB/SmolLM-360M')
+    model = PeftModel.from_pretrained(model, f'fl-results/{sim_name}/round_{round-1}/global_model', is_trainable=True)
 
     # Define Training Arguments
     training_args = TrainingArguments(
         output_dir="./fl-results",
         logging_dir="./logs",
-        logging_steps=100,
-        learning_rate=2e-5,
+        logging_steps=max_steps,
+        learning_rate=2e-3,
         max_steps=max_steps,
         num_train_epochs=epochs,
         weight_decay=0.01,
@@ -139,16 +145,6 @@ def train_client(client, client_dataset, model, round, sim_name, tokenizer,
     return model
 
 def get_adapters(model):
-    adapter_weights = {}
-    
-    for name, param in model.named_parameters():
-        # Check if the parameter belongs to an adapter layer (e.g., contains "lora")
-        if "lora" in name:
-            adapter_weights[name] = param.detach().cpu()  # Detach and move to CPU for saving
-    
-    return adapter_weights
-
-def get_adapters(model):
     """
     Extract LoRA adapter weights from the model.
     Assumes that LoRA layers are identifiable by specific names or attributes.
@@ -166,7 +162,7 @@ def set_adapters(model, aggregated_adapters):
     for name, param in model.named_parameters():
         if name in aggregated_adapters:
             param.data.copy_(aggregated_adapters[name])  # Update the parameter
-
+    
 def aggregate_models(models, lora=True):
     """
     Aggregate models by the mean (FedAvg).
@@ -174,7 +170,6 @@ def aggregate_models(models, lora=True):
     """
     if lora:
         all_adapters = [get_adapters(model) for model in models]
-        
         aggregated_adapters = {}
         
         for key in all_adapters[0].keys():
@@ -197,6 +192,3 @@ def save_global_model(global_model, round, sim_name):
     output_dir = f"./fl-results/{sim_name}/round_{round}/global_model"
     os.makedirs(output_dir, exist_ok=True)
     global_model.save_pretrained(output_dir)
-
-    
-

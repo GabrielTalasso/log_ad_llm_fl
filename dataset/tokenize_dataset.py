@@ -8,7 +8,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 dataset_path = '../.dataset/hdfs/train.csv'
 data = pd.read_csv(dataset_path)
-
+data = data[data['Label'] == 0]
 # Prepare dataset for Hugging Face
 data = data["Content"].tolist()
 dataset_dic = {"text": data}
