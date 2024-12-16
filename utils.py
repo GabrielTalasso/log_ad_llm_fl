@@ -9,6 +9,7 @@ import random
 from typing import List, Tuple
 from datasets import Dataset
 import copy
+import math
 
 def initialize_model(model_name, lora_rank = 8, lora = True, sim_name = 'sim_name', round = 1):
 
@@ -82,8 +83,8 @@ def split_data(dataset, num_clients, eval_split = 0.1):
     return clients_datasets_train, clients_datasets_eval
 
 
-def train_client(client, client_dataset, global_model, round, sim_name, tokenizer, 
-                 epochs=1, batch_size=32, max_steps=100):
+def train_client(client, client_dataset, round, sim_name, tokenizer, 
+                 epochs=1, batch_size=32, max_steps=100, lr = 2e-3):
 
     """
     Train model on client dataset
@@ -96,7 +97,7 @@ def train_client(client, client_dataset, global_model, round, sim_name, tokenize
         output_dir="./fl-results",
         logging_dir="./logs",
         logging_steps=max_steps,
-        learning_rate=2e-3,
+        learning_rate=lr,
         max_steps=max_steps,
         num_train_epochs=epochs,
         weight_decay=0.01,
@@ -192,3 +193,18 @@ def save_global_model(global_model, round, sim_name):
     output_dir = f"./fl-results/{sim_name}/round_{round}/global_model"
     os.makedirs(output_dir, exist_ok=True)
     global_model.save_pretrained(output_dir)
+
+
+def cosine_learning_rate(current_round, total_rounds, initial_lr=0.001, min_lr=0):
+    """
+    Compute the learning rate based on a cosine schedule.
+
+    :param current_round: The current training round (0-indexed).
+    :param total_rounds: The total number of training rounds.
+    :param initial_lr: The initial learning rate.
+    :param min_lr: The minimum learning rate.
+    :return: The computed learning rate for the current round.
+    """
+    # Compute the cosine learning rate
+    cosine_lr = min_lr + 0.5 * (initial_lr - min_lr) * (1 + math.cos(math.pi * current_round / total_rounds))
+    return cosine_lr

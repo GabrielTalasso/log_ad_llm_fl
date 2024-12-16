@@ -7,7 +7,7 @@ from peft import LoraConfig, get_peft_model, PeftModel
 import json
 import numpy as np
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -91,6 +91,13 @@ def eval_global(calcule_topk = False, k = 5, nrows = 1000):
         result['eval_global_loss'] = total_loss / num_batches
         results.append(result)
 
+        df_results = pd.DataFrame(results)
+        sim_name = experiment_path.split('/')[-1]
+        df_results.to_csv(f'results_{sim_name}.csv', index=False)
+
+        df_detection = pd.DataFrame(detection_results)
+        df_detection.to_csv(f'detection_{sim_name}.csv', index=False)
+
     return results, detection_results
 
 def aggregate_client_train_losses():
@@ -115,14 +122,14 @@ def aggregate_client_train_losses():
     return results
 
 if __name__ == '__main__':
-    experiment_path = 'fl-results/returning_model_loading'
-    results_global, detect = eval_global(calcule_topk = True)
-    #Sresults_local = aggregate_client_train_losses()
+    experiment_path = 'fl-results/lr_schedule_cosine'
+    results_global, detect = eval_global(calcule_topk = True, nrows = 3000)
+    results_local = aggregate_client_train_losses()
 
-    #df_local = pd.DataFrame(results_local)
+    df_local = pd.DataFrame(results_local)
     df_results = pd.DataFrame(results_global)
 
-    #df_results['client_losses_train'] = df_local['client_losses_train']
+    df_results['client_losses_train'] = df_local['client_losses_train']
     
     sim_name = experiment_path.split('/')[-1]
     df_results.to_csv(f'results_{sim_name}.csv', index=False)
