@@ -84,12 +84,12 @@ def split_data(dataset, num_clients, eval_split = 0.1):
 
 
 def train_client(client, client_dataset, round, sim_name, tokenizer, 
-                 epochs=1, batch_size=32, max_steps=100, lr = 2e-3):
+                 epochs=1, batch_size=32, max_steps=100, lr = 2e-3, model_name = 'HuggingFaceTB/SmolLM-360M'):
 
     """
     Train model on client dataset
     """
-    model = AutoModelForCausalLM.from_pretrained('HuggingFaceTB/SmolLM-360M')
+    model = AutoModelForCausalLM.from_pretrained(model_name)
     model = PeftModel.from_pretrained(model, f'fl-results/{sim_name}/round_{round-1}/global_model', is_trainable=True)
 
     # Define Training Arguments
@@ -98,9 +98,9 @@ def train_client(client, client_dataset, round, sim_name, tokenizer,
         logging_dir="./logs",
         logging_steps=max_steps,
         learning_rate=lr,
+        weight_decay=0.01,
         max_steps=max_steps,
         num_train_epochs=epochs,
-        weight_decay=0.01,
         per_device_train_batch_size=batch_size,
         save_steps=1000,
         evaluation_strategy="steps",

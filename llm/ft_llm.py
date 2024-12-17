@@ -6,7 +6,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments,
 from peft import LoraConfig, get_peft_model, PeftModel
 import json
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 #load nrows
 nrows = None
@@ -46,8 +46,8 @@ tokenized_datasets = tokenized_datasets.map(tokenize_function_with_labels, batch
 
 # LoRA Configuration
 lora_config = LoraConfig(
-    r=16,  # Rank
-    lora_alpha=32,
+    r=8,  # Rank
+    lora_alpha=16,
     lora_dropout=0.1
 )
 

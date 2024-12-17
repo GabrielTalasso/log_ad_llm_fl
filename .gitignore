@@ -1,5 +1,7 @@
 .venv
 *.pyc
 fl-results/*
+lora-smol/*
+lora-smol-finetuned/*
 models/*
 *.npz

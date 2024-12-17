@@ -7,12 +7,12 @@ from peft import LoraConfig, get_peft_model, PeftModel
 import json
 from torch.utils.data import DataLoader
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "5"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 # Step 1: Load Dataset
 dataset_path = '../.dataset/hdfs/test.csv'
 
-lora_path = "lora-smol/checkpoint-4000"
+lora_path = "lora-smol/checkpoint-11162"
 
 nrows = 10000
 data = pd.read_csv(dataset_path, nrows=nrows)
